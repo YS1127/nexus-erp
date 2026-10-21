@@ -35,7 +35,6 @@ public class SysUserController {
 
     @PutMapping("/{id}")
     public Result<Void> updateUser(@PathVariable(name = "id") Long userId, @RequestBody @Valid UpdateUserRequest request) {
-        System.out.println(request);
         this.sysUserService.updateUser(userId, request);
         return Result.success();
     }

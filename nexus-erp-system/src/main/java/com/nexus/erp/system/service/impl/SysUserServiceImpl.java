@@ -37,7 +37,6 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public Long createUser(CreateUserRequest request) {
-        System.out.println(request);
         LambdaQueryWrapper<SysUser> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUser::getUsername, request.username());
         SysUser sysUser = this.sysUserMapper.selectOne(queryWrapper);
@@ -67,7 +66,13 @@ public class SysUserServiceImpl implements SysUserService {
         sysUser.setNickname(request.nickname());
         sysUser.setEmail(request.email());
         sysUser.setStatus(request.status());
-        this.sysUserMapper.updateById(sysUser);
+        int rows = sysUserMapper.updateById(sysUser);
+        if (rows == 0) {
+            throw new BusinessException(
+                    ResultCode.CONFLICT,
+                    "用户数据已发生变化，请刷新后重试"
+            );
+        }
     }
 
     @Override
@@ -95,7 +100,14 @@ public class SysUserServiceImpl implements SysUserService {
                     "用户ID必须大于0"
             );
         }
-        this.sysUserMapper.deleteById(id);
+        int rows = sysUserMapper.deleteById(id);
+
+        if (rows == 0) {
+            throw new BusinessException(
+                    ResultCode.NOT_FOUND,
+                    "用户不存在"
+            );
+        }
     }
 
     @Override
@@ -109,7 +121,7 @@ public class SysUserServiceImpl implements SysUserService {
                 request.getUsername()
         );
 
-        wrapper.orderByDesc(SysUser::getCreateTime);
+        wrapper.orderByDesc(SysUser::getCreateTime, SysUser::getId);
 
         Page<SysUser> result = this.sysUserMapper.selectPage(page, wrapper);
         PageResult<SysUserVO> pageResult = new PageResult<>();
